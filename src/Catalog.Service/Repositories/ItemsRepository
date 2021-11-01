@@ -1,0 +1,50 @@
+using System;
+using Catalog.Service.Entities;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using MongoDB.Driver;
+
+namespace Catalog.Service.Repositories
+{
+    public class ItemsRepository
+    {
+        private const string collectionName = "items";
+        private readonly IMongoCollection<Item> dbCollection;
+        private readonly FilterDefinitionBuilder<Item> filterBuilder = Builders<Item>.Filter;
+
+        public ItemsRepository()
+        {
+            var mongoClient = new MongoClient("mongodb://localhost:27017");
+            var database = mongoClient.GetDatabase("Catalog");
+            dbCollection = database.GetCollection<Item>(collectionName);
+        }
+
+        public IReadOnlyCollection<Item> GetAll()
+        {
+            return dbCollection.Find(filterBuilder.Empty).ToList();
+        }
+
+        public Item Get(Guid id)
+        {
+            FilterDefinition<Item> filter = filterBuilder.Eq(entity => entity.Id, id);
+            return dbCollection.Find(filter).FirstOrDefault();
+        }
+
+        public void Create(Item entity)
+        {
+            dbCollection.InsertOne(entity);
+        }
+
+        public void Update(Item entity)
+        {
+            FilterDefinition<Item> filter = filterBuilder.Eq(searchitem => searchitem.Id, entity.Id);
+            dbCollection.ReplaceOne(filter, entity);
+        }
+
+        public void Delete(Guid id)
+        {
+            FilterDefinition<Item> filter = filterBuilder.Eq(searchitem => searchitem.Id, id);
+            dbCollection.DeleteOne(filter);
+        }
+    }
+}
